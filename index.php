@@ -1,7 +1,25 @@
 <?php
-$app = new Router();
+//$app = new Router();
+$req = new Request();
+echo json_encode(
+  [
+    'rq_method' => $req->getRequestMethod(),
+    'url '=>$req->url,
+    'body' => $req->getBody(),
+    'where' => $req->getPathParams(),
+    'modifiers' => $req->getQStringVars()
+  ]
+);
 
 
+// $con = file_get_contents("php://input");
+// print_r($con);
+// $con = json_decode(file_get_contents("php://input"));
+// print_r($con);
+// $con = is_array($con)?$con:json_decode(file_get_contents("php://input"),true);
+// print_r($con);
+
+exit();
 // var_dump($app);
 ?>
 <?php
@@ -10,7 +28,7 @@ class Router {
   private $path;
   private $request_method;
   private $custom_method;
-  private $ctrl = null;
+  
   
 
 
@@ -66,23 +84,148 @@ class Login {
 }
 
 class Request {
-
+	private $custome_req_method = null;
+	private $req_condotions = [];
+	private $modifiers = []; //this is an array of url vars
+  private $body =[];
+  private $request_method = null;
+  private $path;
+  private $path_params = [];
+  public $url = null;
+  private $ctrl = null;
+  private $query_string = null;
+	
   function __construct (){
-    
+    //Call init to intiolaize the request
+    $this->init();
   }
   
-
-  function getPath(){
-    $path = $_SERVER['REQUEST_URI']?? : '/';
-     
+  function getCustomReqMethod (){
+  	return $this->custome_req_method;
   }
 
-  function getMethod (){
+  
+  function getPath(){
+    return $this->path;
+  }
+
+  function init (){
+	/*
+	   exxaples
+	    users/name/mwero => get users with name mwero
+	    users/2 => get user with id =>1
+	    users?ORDER=name&sort=DES => gt all users order by name , sort desc/asc
+
+	
+	*/
+
+
+    $url = $_SERVER['REQUEST_URI']?? '/';
+
+    //Check if query_string and set the modifiers
+    $has_query_string = strpos($url,'?');
+    $this->url = $url_parts = $has_query_string? explode('?',$url):['/_index/index']; //
+   
+    //Check if query_string and set the modifiers 
+    $qs = $has_query_string && count($url_parts) > 1? array_pop($url_parts): null;
+    $this->setQStringVars($qs);
+
+   //Remove '/' on both ends
+    $main_path = array_shift($url_parts);
+
+  //check for custome_meth => the one begins with _
+$has_custome_method = strpos($main_path, '_');
+$url_parts = explode('/', trim($main_path, '/'));
+if($has_custome_method){
+$this->custom_method = trim($url_parts[0]);
+array_shift($url_parts);
+}
+    //set ctrl or path
+    $this->path = array_shift($url_parts);
+
+    //Set the remaining parts to parameters
+    if(count($url_parts) > 0){
+      $this->setPathParameters($url_parts);
+    }
     
+  }
+
+  function setPathParams($url = null)
+  {
+    if (is_null($q_string)) return;
+
+    $arr = explode('/', trim($q_string, '/'));
+    $len = count ($arr);
+
+    if ($len % 2 != 0)
+    { 
+        if ($len == 1) $this->path_params = ['id'=>$arr[0]];
+
+    }  else{
+ for ( $n = 0; $n < $len; $n+=2){
+$this->path_params [$arr[$n]] = $arr[$n+1];
+ }
+      }
+
+  }
+
+  function getPathParams(){
+    return $this->path_params;
+  }
+
+/**
+ *  setRequestMethod
+ */
+  function setRequestMethod ($method = null){
+  return $method??$_SERVER['REQUEST_METHOD'];
+  }
+
+  function getRequestMethod (){
+    return $_SERVER['REQUEST_METHOD'];
   }
   
   function getBody(){
     
+    if($_SERVER['REQUEST_METHOD'] == 'GET'){
+      foreach($_GET as $key => $val){
+        $this->body[$key] = $val;
+      }
+    }
+
+    if($_SERVER['REQUEST_METHOD'] == 'POST'){
+      foreach($_POST as $key => $val){
+        $this->body[$key] = $val;
+      }
+    }
+
+    if($_SERVER['REQUEST_METHOD'] == 'PUT' || $_SERVER['REQUEST_METHOD'] == "DELETE"){
+      parse_str(file_get_contents("php://input"), $post_vars);
+
+      foreach($post_vars as $key => $val){
+        $this->body[$key] = $val;
+      }
+    }
+
+    return $this->body;
   }
+
+  function setQStringVars($q_string = null){
+    if(!$q_string) return [];
+
+    $q_string_array = explode('&', $q_string);
+    foreach($q_string_array as $value) {
+      $val = explode('=' , $value);
+      $this->modifiers [$val[0]] = $val[1];
+
+  }
+
+  }
+
+
+  function getQStringVars(){
+       return $this->modifiers;
+  }
+
+
   
 }
