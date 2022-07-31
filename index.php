@@ -120,11 +120,11 @@ class Request {
 	*/
 
 
-    $url = $_SERVER['REQUEST_URI']?? '/';
+   $this->url = $url = $_SERVER['REQUEST_URI']?? '/_index/index/';
 
     //Check if query_string and set the modifiers
     $has_query_string = strpos($url,'?');
-    $this->url = $url_parts = $has_query_string? explode('?',$url):['/_index/index']; //
+   $url_parts = $has_query_string? explode('?',$url):[$url]; //
    
     //Check if query_string and set the modifiers 
     $qs = $has_query_string && count($url_parts) > 1? array_pop($url_parts): null;
@@ -138,23 +138,24 @@ $has_custome_method = strpos($main_path, '_');
 $url_parts = explode('/', trim($main_path, '/'));
 if($has_custome_method){
 $this->custom_method = trim($url_parts[0]);
-array_shift($url_parts);
+// array_shift($url_parts);
 }
     //set ctrl or path
     $this->path = array_shift($url_parts);
 
     //Set the remaining parts to parameters
     if(count($url_parts) > 0){
-      $this->setPathParameters($url_parts);
+      $this->setPathParams($url_parts);
     }
     
   }
 
-  function setPathParams($url = null)
+  function setPathParams($params = [])
   {
-    if (is_null($q_string)) return;
+    if (empty($params)) return;
 
-    $arr = explode('/', trim($q_string, '/'));
+    // $arr = explode('/', trim($q_string, '/'));
+    $arr = $params;
     $len = count ($arr);
 
     if ($len % 2 != 0)
@@ -170,6 +171,7 @@ $this->path_params [$arr[$n]] = $arr[$n+1];
   }
 
   function getPathParams(){
+    
     return $this->path_params;
   }
 
