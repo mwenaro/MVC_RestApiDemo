@@ -1,15 +1,12 @@
 <?php
-//$app = new Router();
-$req = new Request();
-echo json_encode(
-  [
-    'rq_method' => $req->getRequestMethod(),
-    'url '=>$req->url,
-    'body' => $req->getBody(),
-    'where' => $req->getPathParams(),
-    'modifiers' => $req->getQStringVars()
-  ]
-);
+$app = new Router();
+
+// var_dump($app);
+$app->get('/');
+$app->get('login');
+$app->get('/index');
+
+
 
 
 // $con = file_get_contents("php://input");
@@ -19,7 +16,7 @@ echo json_encode(
 // $con = is_array($con)?$con:json_decode(file_get_contents("php://input"),true);
 // print_r($con);
 
-exit();
+// exit();
 // var_dump($app);
 ?>
 <?php
@@ -28,16 +25,30 @@ class Router {
   private $path;
   private $request_method;
   private $custom_method;
+  protected $request;
   
   
 
 
-  function __construt (){
+  function __construct (){
+    $this->request = new Request();
     
   }
 
-  function get($path, $callback){
+  function get($path, $callback = null){
    
+   if ($path == $this->request->getPath() && $this->request->getRequestMethod() == 'GET'){
+ 
+      echo json_encode(
+        [
+          'rq_method' =>$this->request->getRequestMethod(),
+          'url '=>$this->request->url,
+          'body' =>$this->request->getBody(),
+          'where' =>$this->request->getPathParams(),
+          'modifiers' =>$this->request->getQStringVars()
+        ]
+      );
+    }
   }
 
 function post($path, $path_value){
