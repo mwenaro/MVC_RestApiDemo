@@ -1,11 +1,22 @@
 <?php
+require_once './functions.php';
+
 $app = new Router();
 
 // var_dump($app);
-$app->get('/');
-$app->get('login');
-$app->get('/index');
 
+$app->get('/teachers/:fname/:age/',function($req,$res){
+  echo json_encode(['msg'=>'hello from get']);
+  print_r($req->getBody());
+});
+
+$app->get('/path', function(){
+  echo json_encode(['msg'=>'hello from get']);
+});
+
+$app->get('/', function(){
+  echo json_encode(['msg'=>'hello from get']);
+});
 
 
 
@@ -26,6 +37,7 @@ class Router {
   private $request_method;
   private $custom_method;
   protected $request;
+  protected $response;
   
   
 
@@ -37,17 +49,9 @@ class Router {
 
   function get($path, $callback = null){
    
-   if ($path == $this->request->getPath() && $this->request->getRequestMethod() == 'GET'){
- 
-      echo json_encode(
-        [
-          'rq_method' =>$this->request->getRequestMethod(),
-          'url '=>$this->request->url,
-          'body' =>$this->request->getBody(),
-          'where' =>$this->request->getPathParams(),
-          'modifiers' =>$this->request->getQStringVars()
-        ]
-      );
+if ($path == $this->request->getFormatedPath() && $this->request->getRequestMethod() == 'GET'){
+$callback($this->request, $this->response);
+     
     }
   }
 
@@ -101,10 +105,13 @@ class Request {
   private $body =[];
   private $request_method = null;
   private $path;
+  private $formated_path = null;
   private $path_params = [];
   public $url = null;
   private $ctrl = null;
   private $query_string = null;
+  public $controller = null;
+  
 	
   function __construct (){
     //Call init to intiolaize the request
@@ -130,36 +137,59 @@ class Request {
 	
 	*/
 
+//students/form/2?order=adm&limit=20
+   $this->url = $url = $_SERVER['REQUEST_URI']?? '/';
+   //Check if query_string and set the modifiers
+   $url_parts_v0 = [];
+   if(strpos($url,'?') !== -1){
+      $url_parts_v0 = explode("?",$url);
+      $url = $url_parts_v0[0]; /* /students/form/2 */
+      $q_string = $url_parts_v0[1];
 
-   $this->url = $url = $_SERVER['REQUEST_URI']?? '/_index/index/';
+      //Set query string values
+      $this->setQStringVars($q_string);
+   }
 
-    //Check if query_string and set the modifiers
-    $has_query_string = strpos($url,'?');
-   $url_parts = $has_query_string? explode('?',$url):[$url]; //
+   //Extract the main path  from i.e   
+    $url_parts_v1 = explode("/", trim($url, "/"));
+   $this->controller = count($url_parts_v1) > 0 ? $url_parts_v1[0]:'index';
    
-    //Check if query_string and set the modifiers 
-    $qs = $has_query_string && count($url_parts) > 1? array_pop($url_parts): null;
-    $this->setQStringVars($qs);
+ 
+ //set ctrl or path
+ // /students/form/2 => /students/:form
+    $this->path = $url;
+    $this->setFormatedPath($url_parts_v1);
+    array_shift($url_parts_v1);
 
-   //Remove '/' on both ends
-    $main_path = array_shift($url_parts);
-
-  //check for custome_meth => the one begins with _
-$has_custome_method = strpos($main_path, '_');
-$url_parts = explode('/', trim($main_path, '/'));
-if($has_custome_method){
-$this->custom_method = trim($url_parts[0]);
-// array_shift($url_parts);
-}
-    //set ctrl or path
-    $this->path = array_shift($url_parts);
-
-    //Set the remaining parts to parameters
-    if(count($url_parts) > 0){
-      $this->setPathParams($url_parts);
+    //Set the remaining parts to path parameters
+    if(count($url_parts_v1) > 0){
+      $this->setPathParams($url_parts_v1);
     }
-    
+      
   }
+
+
+function setFormatedPath($url_parts){
+  $main_path = array_shift($url_parts);
+  $f_path= "/{$main_path}/";
+   $len = count($url_parts);
+
+   //Pair the remaining such way that [ [0] => [[1], [2]] => [3]]
+ 
+    for($i = 0; $i < count($url_parts); $i+=2){
+        if($i+1 < $len):
+            $f_path .=":".$url_parts[$i]."/";
+        endif;
+        
+  }
+
+  $this->formated_path = $f_path;
+  
+}
+
+function getFormatedPath (){
+  return $this->formated_path;
+}
 
   function setPathParams($params = [])
   {
@@ -181,6 +211,7 @@ $this->path_params [$arr[$n]] = $arr[$n+1];
 
   }
 
+    
   function getPathParams(){
     
     return $this->path_params;
