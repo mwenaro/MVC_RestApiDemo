@@ -4,11 +4,11 @@ class Request {
 	private $custome_req_method = null;
 	private $req_condotions = [];
 	private $modifiers = []; //this is an array of url vars
-  private $body =[];
+  public $body =[];
   private $request_method = null;
   private $path;
   private $formated_path = null;
-  private $path_params = [];
+  public $params = [];
   public $url = null;
   private $ctrl = null;
   private $query_string = null;
@@ -72,20 +72,29 @@ class Request {
 
 
 function setFormatedPath($url_parts){
-  $main_path = array_shift($url_parts);
-  $f_path= "/{$main_path}/";
-   $len = count($url_parts);
+ $this->formated_path = "/";
 
-   //Pair the remaining such way that [ [0] => [[1], [2]] => [3]]
- 
-    for($i = 0; $i < count($url_parts); $i+=2){
+ if(empty($url_parts)){
+  return;
+}
+
+ $main_path = array_shift($url_parts);
+  $this->formated_path .= "{$main_path}/";
+
+$len = count($url_parts);
+
+if($len === 1){
+  $this->formated_path .= ":id";
+  return;
+}
+
+    for($i = 0; $i < $len; $i+=2){
         if($i+1 < $len):
-            $f_path .=":".$url_parts[$i]."/";
+            $this->formated_path .=":".$url_parts[$i]."/";
         endif;
         
   }
 
-  $this->formated_path = $f_path;
   
 }
 
@@ -103,11 +112,12 @@ function getFormatedPath (){
 
     if ($len % 2 != 0)
     { 
-        if ($len == 1) $this->path_params = ['id'=>$arr[0]];
+        if ($len == 1) $this->params = ['id'=>$arr[0]];
 
     }  else{
+
  for ( $n = 0; $n < $len; $n+=2){
-$this->path_params [$arr[$n]] = $arr[$n+1];
+$this->params [$arr[$n]] = $arr[$n+1];
  }
       }
 
@@ -116,7 +126,7 @@ $this->path_params [$arr[$n]] = $arr[$n+1];
     
   function getPathParams(){
     
-    return $this->path_params;
+    return $this->params;
   }
 
 /**
