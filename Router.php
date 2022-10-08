@@ -1,5 +1,4 @@
 <?php
-require_once './Request.php';
 class Router {
     protected $routes = [];
     private $path;
@@ -11,8 +10,9 @@ class Router {
     
   
   
-    function __construct (){
-      $this->request = new Request();
+    function __construct ($req, $res){
+      $this->request = $req;
+      $this->response = $res;
       
     }
   
@@ -46,8 +46,9 @@ class Router {
     }
     exit();
     }
-  function any($path, $path_value){
-    return;  
+  function any(){
+   $this->response->status(404)->json(['message' => 'Invalid api  endpoint']); 
+   return;  
     }
   function register_route($path, $path_value){
       
