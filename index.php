@@ -7,27 +7,45 @@ header("Access-Control-Allow-Methods:FETCH,POST, GET , OPTIONS, DELETE, PUT ");
 header("Access-Control-Allow-Max-Age:3000");
 
 require_once './Router.php';
+require_once './Request.php';
+require_once './Response.php';
 
-$app = new Router();
+$app = new Router( new Request, new Response);
 
 // var_dump($app);
 //students/:form/marks:/examId
-//students/form/2/marks/examId/3
 $app->get('/teachers/:name/:age/',function($req,$res){
-  print_r($req->getBody());
+  print_r([
+'params'=>$req->params,
+'path' => $req->url,
+'formated path' =>$req ->getFormatedPath()
+]);
  
 });
-$app ->get('/teachers/:id',function(){
-  echo json_encode(['msg'=>'hello from get/:id']);
+$app ->get('/teachers/:id',function($req, $ers){
+   print_r([
+'params'=>$req->params,
+'path' => $req->url,
+'formated path' =>$req ->getFormatedPath()
+]);
 });
 
-$app->get('/path', function(){
-  echo json_encode(['msg'=>'hello from /path']);
+//students/form/2/marks/examId/3
+$app->get('/students/:form/marks/:id', function($req, $res){
+  echo json_encode([
+'path' => '/students/:form/marks/:id',
+'body' => $req->getBody(),
+'formated' => $rew->getFomatedPath()
+
+]);
+
 });
 
 $app->get('/', function(){
   echo json_encode(['msg'=>'hello from / ']);
 });
+
+$app->any();
 
 
 
